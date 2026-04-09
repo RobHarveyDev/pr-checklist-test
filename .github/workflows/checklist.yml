@@ -8,6 +8,9 @@ concurrency:
   group: pr-checklist-${{ github.event.pull_request.number }}
   cancel-in-progress: true
 
+permissions:
+  checks: write
+
 jobs:
   checklist:
     name: PR Checklist Completed
@@ -31,4 +34,7 @@ jobs:
         working-directory: .github/scripts
         env:
           PR_BODY: ${{ github.event.pull_request.body }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
         run: npm run check
