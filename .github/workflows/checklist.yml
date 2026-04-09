@@ -1,13 +1,22 @@
 name: PR Checklist
 
 on:
-  pull_request:
-    types: [opened, edited, synchronize, reopened]
+  pull_request_target:
+    types: [opened, edited, synchronize, reopened, ready_for_review]
+
+concurrency:
+  group: pr-checklist-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  checks: write
 
 jobs:
   checklist:
-    name: Verify PR checklist
+    name: PR Checklist Completed
     runs-on: ubuntu-latest
+    if: ${{ !github.event.pull_request.draft }}
 
     steps:
       - name: Checkout repository
@@ -26,5 +35,7 @@ jobs:
         working-directory: .github/scripts
         env:
           PR_BODY: ${{ github.event.pull_request.body }}
-        run: npx tsx check-pr-checklist.ts
-
+          GITHUB_TOKEN: ${{ github.token }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: npm run check
