@@ -2,14 +2,11 @@ name: PR Checklist
 
 on:
   pull_request:
-    types: [opened, edited, synchronize, reopened]
-
-permissions:
-  checks: write
+    types: [opened, edited]
 
 jobs:
   checklist:
-    name: Verify PR checklist
+    name: PR Checklist Completed
     runs-on: ubuntu-latest
     if: github.event.action != 'edited' || github.event.changes.body
 
@@ -26,31 +23,8 @@ jobs:
         working-directory: .github/scripts
         run: npm install
 
-      - name: Parse PR checklist
-        id: checklist
+      - name: Check PR checklist
         working-directory: .github/scripts
         env:
           PR_BODY: ${{ github.event.pull_request.body }}
         run: npm run check
-
-      - name: Report checklist status
-        uses: actions/github-script@v7
-        with:
-          script: |
-            const conclusion = '${{ steps.checklist.outputs.conclusion }}';
-            const summary = '${{ steps.checklist.outputs.summary }}';
-
-            await github.rest.checks.create({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              name: 'PR Checklist Completed',
-              head_sha: context.payload.pull_request.head.sha,
-              status: 'completed',
-              conclusion,
-              output: {
-                title: conclusion === 'success'
-                  ? '✅ All checklist items completed'
-                  : '⚠️ Checklist incomplete',
-                summary,
-              },
-            });
