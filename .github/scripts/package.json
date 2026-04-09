@@ -1,0 +1,14 @@
+{
+  "name": "pr-checklist-check",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "check": "tsx check-pr-checklist.ts"
+  },
+  "devDependencies": {
+    "tsx": "^4.19.0",
+    "typescript": "^5.5.0",
+    "@types/node": "^20.14.0"
+  }
+}
+
