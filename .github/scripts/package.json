@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "check": "npx tsx check-pr-checklist.ts"
+    "check": "tsx check-pr-checklist.ts"
   },
   "devDependencies": {
     "tsx": "^4.19.0",
