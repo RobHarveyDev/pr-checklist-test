@@ -26,5 +26,5 @@ jobs:
         working-directory: .github/scripts
         env:
           PR_BODY: ${{ github.event.pull_request.body }}
-        run: npx tsx check-pr-checklist.ts
+        run: npm run check
 
