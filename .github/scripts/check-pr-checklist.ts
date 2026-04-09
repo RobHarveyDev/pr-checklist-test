@@ -1,3 +1,5 @@
+/// <reference types="node" />
+
 /**
  * Parses the PR description and verifies that every checklist item
  * between <!-- PR_CHECK_LIST_START --> and <!-- PR_CHECK_LIST_END -->
@@ -92,7 +94,13 @@ async function createCheckRun(
     console.log(
       `::warning::Failed to create check run (${response.status}): ${body}`
     );
+    return;
   }
+
+  const result = (await response.json()) as { id?: number; html_url?: string };
+  console.log(
+    `Created check run '${CHECK_NAME}' with conclusion '${conclusion}'${result.id ? ` (id: ${result.id})` : ""}${result.html_url ? `: ${result.html_url}` : ""}`
+  );
 }
 
 // ── Main ───────────────────────────────────────────────────────────────
@@ -103,7 +111,7 @@ async function main(): Promise<void> {
   if (!body.includes(START_MARKER) || !body.includes(END_MARKER)) {
     const msg = `PR description is missing the checklist markers (\`${START_MARKER}\` / \`${END_MARKER}\`).`;
     console.log(`::warning::${msg}`);
-    await createCheckRun("action_required", "Checklist markers missing", msg);
+    await createCheckRun("failure", "Checklist markers missing", msg);
     return;
   }
 
@@ -112,7 +120,7 @@ async function main(): Promise<void> {
   if (items.length === 0) {
     const msg = "No checklist items found between the markers.";
     console.log(`::warning::${msg}`);
-    await createCheckRun("action_required", "No checklist items", msg);
+    await createCheckRun("failure", "No checklist items", msg);
     return;
   }
 
@@ -138,7 +146,7 @@ async function main(): Promise<void> {
     const title = `${unchecked.length} of ${items.length} item(s) unchecked`;
     console.log(`::warning::${title}`);
     await createCheckRun(
-      "action_required",
+      "failure",
       title,
       `### Checklist\n\n${summaryMd}\n\nPlease complete all items before merging.`
     );

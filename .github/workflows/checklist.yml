@@ -1,7 +1,7 @@
 name: PR Checklist
 
 on:
-  pull_request:
+  pull_request_target:
     types: [opened, edited, synchronize, reopened, ready_for_review]
 
 concurrency:
@@ -9,6 +9,7 @@ concurrency:
   cancel-in-progress: true
 
 permissions:
+  contents: read
   checks: write
 
 jobs:
@@ -34,7 +35,7 @@ jobs:
         working-directory: .github/scripts
         env:
           PR_BODY: ${{ github.event.pull_request.body }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ github.token }}
           GITHUB_REPOSITORY: ${{ github.repository }}
           PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
         run: npm run check
