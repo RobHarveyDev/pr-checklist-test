@@ -3,9 +3,11 @@
  * between <!-- PR_CHECK_LIST_START --> and <!-- PR_CHECK_LIST_END -->
  * is checked (i.e. `- [x]`).
  *
- * Exit code 0 = all items checked.
- * Exit code 1 = one or more items unchecked, or markers missing.
+ * Outputs a JSON result to a GitHub Actions output variable so the
+ * workflow can report the result via the Checks API without failing.
  */
+
+import { appendFileSync } from "node:fs";
 
 const START_MARKER = "PR_CHECK_LIST_START";
 const END_MARKER = "PR_CHECK_LIST_END";
@@ -48,21 +50,32 @@ function extractChecklist(body: string): ChecklistItem[] {
 
 // ── Main ───────────────────────────────────────────────────────────────
 
+function setOutput(name: string, value: string): void {
+  const outputFile = process.env.GITHUB_OUTPUT;
+  if (outputFile) {
+    appendFileSync(outputFile, `${name}=${value}\n`);
+  }
+}
+
 function main(): void {
   const body = process.env.PR_BODY ?? "";
 
   if (!body.includes(START_MARKER) || !body.includes(END_MARKER)) {
-    console.error(
-      `❌ PR description is missing the checklist markers (${START_MARKER} / ${END_MARKER}).`
-    );
-    process.exit(1);
+    const msg = `PR description is missing the checklist markers (${START_MARKER} / ${END_MARKER}).`;
+    console.error(`❌ ${msg}`);
+    setOutput("conclusion", "action_required");
+    setOutput("summary", msg);
+    return;
   }
 
   const items = extractChecklist(body);
 
   if (items.length === 0) {
-    console.error("❌ No checklist items found between the markers.");
-    process.exit(1);
+    const msg = "No checklist items found between the markers.";
+    console.error(`❌ ${msg}`);
+    setOutput("conclusion", "action_required");
+    setOutput("summary", msg);
+    return;
   }
 
   console.log(`Found ${items.length} checklist item(s):\n`);
@@ -78,15 +91,16 @@ function main(): void {
   console.log(); // blank line
 
   if (unchecked.length > 0) {
-    console.error(
-      `❌ ${unchecked.length} item(s) still unchecked. Please complete the checklist before merging.`
-    );
-    process.exit(1);
+    const msg = `${unchecked.length} of ${items.length} checklist item(s) still unchecked. Please complete the checklist before merging.`;
+    console.warn(`⚠️  ${msg}`);
+    setOutput("conclusion", "action_required");
+    setOutput("summary", msg);
+    return;
   }
 
   console.log("✅ All checklist items are completed!");
+  setOutput("conclusion", "success");
+  setOutput("summary", "All checklist items are completed!");
 }
 
 main();
-
-
